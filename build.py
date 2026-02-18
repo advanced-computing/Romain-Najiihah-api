@@ -5,6 +5,11 @@ import pandas as pd
 film_permits = Flask(__name__)
 
 
+@film_permits.get("/")
+def home():
+    return "Server is running. No worries. Choose your path wisely. /api/list is perhaps the one you want to go to."
+
+
 @film_permits.get("/api/list")
 def list():
 
@@ -30,6 +35,21 @@ def list():
     data = convert_to_format(data, format)
 
     return data
+
+
+@film_permits.get("/api/record/<record_id>")
+def get_record(record_id):
+    # Load the data
+    data = pd.read_csv("Film_Permits_20260213.csv")
+
+    # Find the record with the specified ID
+    record = data[data["EventID"] == int(record_id)]
+
+    if record.empty:
+        return "Record not found"
+
+    # Convert the record to the requested format
+    return convert_to_format(record, request.args.get("format", "json"))
 
 
 def filter_by_value(data, filterby, filtervalue):
