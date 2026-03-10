@@ -8,3 +8,10 @@ CREATE TABLE IF NOT EXISTS film_permits AS
 
 -- Verify the data was loaded
 SELECT COUNT(*) AS total_records FROM film_permits;
+
+-- Add a table named "users"
+CREATE TABLE IF NOT EXISTS users (
+    username VARCHAR,
+    age      INTEGER,
+    country  VARCHAR
+);
