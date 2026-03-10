@@ -1,11 +1,8 @@
 from flask import Flask
 from flask import request
 import pandas as pd
-import duckdb
 
 film_permits = Flask(__name__)
-
-DB_FILE = "film_permit.db"
 
 
 @film_permits.get("/")
@@ -23,10 +20,8 @@ def list():
     limit = int(request.args.get("limit", 1000))
     offset = int(request.args.get("offset", 0))
 
-    # Connect to database
-    conn = duckdb.connect(DB_FILE)
-    data = conn.execute("SELECT * FROM film_permits").df()
-    conn.close()
+    # Load the data
+    data = pd.read_csv("Film_Permits_20260213.csv")
 
     # filter the data
     data = filter_by_value(data, filterby, filtervalue)
@@ -45,11 +40,10 @@ def list():
 @film_permits.get("/api/record/<record_id>")
 def get_record(record_id):
     # Load the data
-    conn = duckdb.connect(DB_FILE)
-    record = conn.execute(
-        "SELECT * FROM film_permits WHERE EventID = ?", [int(record_id)]
-    ).df()
-    conn.close()
+    data = pd.read_csv("Film_Permits_20260213.csv")
+
+    # Find the record with the specified ID
+    record = data[data["EventID"] == int(record_id)]
 
     if record.empty:
         return "Record not found"
