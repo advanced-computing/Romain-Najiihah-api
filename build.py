@@ -42,6 +42,54 @@ def list():
     return data
 
 
+@film_permits.post("/api/users")
+def add_user():
+    data = request.get_json()
+    username = data.get("username")
+    age = data.get("age")
+    country = data.get("country")
+
+    if not username or age is None or not country:
+        return {"error": "username, age, and country are required"}, 400
+
+    conn = duckdb.connect(DB_FILE)
+    conn.execute(
+        "INSERT INTO users (username, age, country) VALUES (?, ?, ?)",
+        [username, int(age), country]
+    )
+    conn.close()
+
+    return {"message": f"User '{username}' added successfully"}, 201
+
+
+@film_permits.get("/api/users/stats")
+def user_stats():
+    conn = duckdb.connect(DB_FILE)
+    result = conn.execute("""
+        SELECT
+            COUNT(*) AS total_users,
+            AVG(age) AS average_age,
+            country,
+            COUNT(*) AS country_count
+        FROM users
+        GROUP BY country
+        ORDER BY country_count DESC
+        LIMIT 3
+    """).df()
+
+    total = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+    avg_age = conn.execute("SELECT AVG(age) FROM users").fetchone()[0]
+    conn.close()
+
+    top_countries = result[["country", "country_count"]].to_dict(orient="records")
+
+    return {
+        "total_users": total,
+        "average_age": round(avg_age, 2) if avg_age else None,
+        "top_3_countries": top_countries
+    }
+
+
 @film_permits.get("/api/record/<record_id>")
 def get_record(record_id):
     # Load the data
